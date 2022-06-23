@@ -9,7 +9,7 @@ import torch
 import pandas as pd
 from datetime import datetime
 from Retinaface_gpu.Retina_gpu import RetinaGPU
-from Arcface_custom import ArcFaceRecog
+# from Arcface_custom import ArcFaceRecog
 from resnet100.arcface_recognition_r100 import ArcfaceR100
 from utils.face_utils import *
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
@@ -65,7 +65,7 @@ def face_recognition(image,scale,Arcface_model_select):
     return image
 
 
-Arcface_model_select='r50'
+Arcface_model_select='r100'
 
 if Arcface_model_select=='r100':
     print('Arcface with Resnet-100 as Backbone selected...')
