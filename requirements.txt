@@ -1,0 +1,16 @@
+# ArcFace
+
+tensorflow>=2.3.0
+pyyaml>=5.3
+opencv-python==4.5.4.60
+requests>=2.24.0
+
+# Retina
+
+Pillow>=5.2.0
+torch
+torchvision
+torchsummary>=1.5.1
+
+# others
+pandas

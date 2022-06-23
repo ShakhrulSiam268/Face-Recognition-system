@@ -9,30 +9,23 @@ import torch
 import pandas as pd
 from datetime import datetime
 from Retinaface_gpu.Retina_gpu import RetinaGPU
-# from Arcface_custom import ArcFaceRecog
 from resnet100.arcface_recognition_r100 import ArcfaceR100
 from utils.face_utils import *
-os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 
-def face_recognition(image,scale,Arcface_model_select):
-    faces, face_region = retina.extract_faces(image,scale, alignment = True) # Retina-GPU
+def face_recognition(image, scale):
+    faces, face_region = retina.extract_faces(image, scale, alignment=True) # Retina-GPU
     face_region = np.array(face_region)
     image = cv2.resize(image, (0, 0), fx=scale, fy=scale)
     org_img = image.copy()
     detected_names = []
-    print('Total Face Found : ',len(faces))
+    print('Total Face Found : ', len(faces))
 
     for face in faces:
         try:
-            face = cv2.resize(face,(112,112))
-
-            if Arcface_model_select=='r100':
-                embd = arcface_model.get_feature(face)
-            elif Arcface_model_select=='r50':
-                embd = face_rec.calc_emb(face)
-
-            embd = np.array(embd)
+            face = cv2.resize(face, (112, 112))
+            embd = np.array(arcface_model.get_feature(face))
             probabilities = np.dot(known_embeddings,embd.T)
             index = np.argmax(probabilities)
             score = np.max(probabilities)
@@ -45,9 +38,9 @@ def face_recognition(image,scale,Arcface_model_select):
             detected_names.append(name)
             current_time = datetime.now().strftime("%H:%M:%S")
             if name != 'unknown':
-                print('    Name :    {}     Score :    {}    Time: {}'.format(name, round(score,3), current_time))
+                print('    Name :    {}     Score :    {}    Time: {}'.format(name, round(score, 3), current_time))
         except:
-            print('Face Loading error, shape:',face.shape)
+            print('Face Loading error, shape:', face.shape)
 
     detected_names = np.array(detected_names)
     resize_to = 1280
@@ -60,39 +53,20 @@ def face_recognition(image,scale,Arcface_model_select):
     face_region_resized = np.array(face_region_resized)
     for i in range(len(face_region)):
         image = draw_boxes(img_resized, face_region_resized[i], detected_names[i], 1)
-
-
     return image
 
 
-Arcface_model_select='r100'
-
-if Arcface_model_select=='r100':
-    print('Arcface with Resnet-100 as Backbone selected...')
-    weight_path = './models/r100_Glint360kCosface.pth'
-    arcface_model = ArcfaceR100()
-    model = arcface_model.load_insightface_pytorch_model(weight_path)
-    threshold = 0.5
-    known_embeddings = pd.read_csv("./embed_data/embed_data_r100.csv",header=None)
-    known_labels = pd.read_csv("./embed_data/true_label_r100.csv",header=None)
-    known_labels = np.array(known_labels)
-    with open('./embed_data/names_r100.pkl', 'rb') as handle: 
-        names = pickle.load(handle)
-
-elif Arcface_model_select == 'r50':
-    print('Arcface with Resnet-50 as Backbone selected...')
-    arcface_model_path = './models/model.tflite'  # Resnet-50
-    face_rec = ArcFaceRecog.ArcFace(arcface_model_path)
-    threshold = 0.6
-    known_embeddings = pd.read_csv("./embed_data/embed_data_r50.csv",header=None)
-    known_labels = pd.read_csv("./embed_data/true_label_r50.csv",header=None)
-    known_labels = np.array(known_labels)
-    with open('./embed_data/names_r50.pkl', 'rb') as handle: 
-        names = pickle.load(handle)
+weight_path = './models/r100_Glint360kCosface.pth'
+arcface_model = ArcfaceR100()
+model = arcface_model.load_insightface_pytorch_model(weight_path)
+threshold = 0.5
+known_embeddings = pd.read_csv("./embed_data/embed_data_r100.csv",header=None)
+known_labels = pd.read_csv("./embed_data/true_label_r100.csv",header=None)
+known_labels = np.array(known_labels)
+with open('./embed_data/names_r100.pkl', 'rb') as handle:
+    names = pickle.load(handle)
 
 
-#========================================================
-#retina = RetinaDetector.RetinaFaceDetector()
 if torch.cuda.is_available():
     retina = RetinaGPU(0)   # (-1) for CPU, (0) for GPU
     print('Cuda Available, Running on GPU...')
@@ -100,20 +74,19 @@ if torch.cuda.is_available():
 else:
     retina = RetinaGPU(-1)
     print('Cuda Not Found, Running on CPU...')
-#========================================================
 
 scale = 0.6
 
 t1 = time.time()
 file_name = '8.jpg'
 frame = cv2.imread('./test/'+file_name)
-image = face_recognition(frame,scale,Arcface_model_select)
-image = cv2.resize(image,(640,640))
+image = face_recognition(frame, scale)
+image = cv2.resize(image, (640, 640))
 t2 = time.time()
 print('Processing Time : {} s'.format(round((t2-t1),3)))
-cv2.imwrite('./test/results/'+file_name,image)
+cv2.imwrite('./test/results/'+file_name, image)
 
-cv2.imshow('Face Recognition MIS',image)
+cv2.imshow('Face Recognition MIS', image)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 
