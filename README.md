@@ -8,7 +8,7 @@ Model used :
 
 ## Face Recognition
 
-Model used : `Arcface (Resnet-100)`
+Model used : `Arcface (Resnet-50)`
 
 input size = `112x112`
 
